@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量産APIconfig.yaml生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .input-section, .output-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 3px solid #4f46e5;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.95rem;
+        }
+
+        textarea, input {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            resize: vertical;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .config-input {
+            height: 120px;
+        }
+
+        .json-input {
+            height: 200px;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .output-area {
+            background: #f8fafc;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            min-height: 300px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #3730a3;
+        }
+
+        .copy-success {
+            background: #10b981 !important;
+        }
+
+        .error {
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #dc2626;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #374151;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #4f46e5;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>量産APIconfig.yaml生成器</h1>
+            <p>設定とJSONデータからフィールド定義を自動生成</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">入力設定</h2>
+                
+                <div class="input-group">
+                    <label for="config">基本設定：</label>
+                    <textarea 
+                        id="config" 
+                        class="config-input" 
+                        placeholder='name: "legacy.mt_type"
+database: "common"
+naturalKey: [ "typetype_id", "code" ]'></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label for="jsonData">サンプルJSONデータ：</label>
+                    <textarea 
+                        id="jsonData" 
+                        class="json-input" 
+                        placeholder='{
+  "id": 17,
+  "code": "17",
+  "name": "商談グループ",
+  "recno": "[-1.0:10]",
+  "status": "0x8001",
+  "storage_id": 0,
+  "typetype_id": 1
+}'></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label>オプション設定：</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="enableLength">
+                            <span>length（最大桁数）を含める（デフォルト: 16）</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="enableMin">
+                            <span>min（最小値）を含める（integer型のみ、デフォルト: 0）</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="enableMax">
+                            <span>max（最大値）を含める（integer型のみ、デフォルト: 1）</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button class="generate-btn" onclick="generateSchema()">
+                    🚀 フィールド定義を生成
+                </button>
+            </div>
+            
+            <div class="output-section">
+                <h2 class="section-title">生成結果</h2>
+                <div class="output-area" id="output">
+                    <button class="copy-btn" onclick="copyOutput()" id="copyBtn">コピー</button>
+                    「フィールド定義を生成」ボタンをクリックして開始...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 设置默认值
+        document.getElementById('config').value = `name: "legacy.mt_type"
+database: "common"
+naturalKey: [ "typetype_id", "code" ]`;
+
+        document.getElementById('jsonData').value = `{
+  "id": 17,
+  "code": "17",
+  "name": "商談グループ",
+  "recno": "[-1.0:10]",
+  "status": "0x8001",
+  "storage_id": 0,
+  "typetype_id": 1
+}`;
+
+        function inferType(value) {
+            if (value === null || value === undefined) {
+                return "STRING";
+            }
+            
+            if (typeof value === "number") {
+                return Number.isInteger(value) ? "INTEGER" : "STRING";
+            }
+            
+            if (typeof value === "string") {
+                // 检查是否为整数字符串
+                if (/^\d+$/.test(value)) {
+                    return "INTEGER";
+                }
+                
+                // 检查日期格式 (YYYY-MM-DD, YYYY/MM/DD, etc.)
+                if (/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/.test(value)) {
+                    return "DATE";
+                }
+                
+                // 检查时间戳格式 (YYYY-MM-DD HH:mm:ss, ISO格式等)
+                if (/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}[\sT]\d{1,2}:\d{1,2}(:\d{1,2})?/.test(value) || 
+                    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+                    return "TIMESTAMP";
+                }
+                
+                return "STRING";
+            }
+            
+            return "STRING";
+        }
+
+        function parseConfig(configText) {
+            const lines = configText.trim().split('\n');
+            const config = {};
+            
+            for (let line of lines) {
+                line = line.trim();
+                if (line.includes('name:')) {
+                    config.name = line.split('name:')[1].trim().replace(/"/g, '');
+                } else if (line.includes('database:')) {
+                    config.database = line.split('database:')[1].trim().replace(/"/g, '');
+                } else if (line.includes('naturalKey:')) {
+                    const keyPart = line.split('naturalKey:')[1].trim();
+                    // 解析数组格式 [ "key1", "key2" ]
+                    const matches = keyPart.match(/\[(.*)\]/);
+                    if (matches) {
+                        config.naturalKey = matches[1]
+                            .split(',')
+                            .map(key => key.trim().replace(/"/g, ''));
+                    }
+                }
+            }
+            
+            return config;
+        }
+
+        function generateSchema() {
+            try {
+                const configText = document.getElementById('config').value;
+                const jsonText = document.getElementById('jsonData').value;
+                
+                if (!configText.trim() || !jsonText.trim()) {
+                    throw new Error('設定とJSONデータを入力してください');
+                }
+                
+                // 解析配置
+                const config = parseConfig(configText);
+                
+                // 解析JSON数据
+                const jsonData = JSON.parse(jsonText);
+                
+                // フィールド定義を生成
+                const fields = {};
+                const naturalKeySet = new Set(config.naturalKey || []);
+                const enableLength = document.getElementById('enableLength').checked;
+                const enableMin = document.getElementById('enableMin').checked;
+                const enableMax = document.getElementById('enableMax').checked;
+                
+                for (const [fieldName, value] of Object.entries(jsonData)) {
+                    const fieldType = inferType(value);
+                    const isRequired = naturalKeySet.has(fieldName);
+                    
+                    const fieldConfig = {
+                        type: fieldType.toLowerCase(),
+                        required: isRequired
+                    };
+                    
+                    // オプション設定を追加
+                    if (enableLength) {
+                        fieldConfig.length = 16;
+                    }
+                    
+                    if (fieldType === 'INTEGER') {
+                        if (enableMin) {
+                            fieldConfig.min = 0;
+                        }
+                        if (enableMax) {
+                            fieldConfig.max = 1;
+                        }
+                    }
+                    
+                    fields[fieldName] = fieldConfig;
+                }
+                
+                // 生成最终结果
+                const result = {
+                    name: config.name,
+                    database: config.database.toUpperCase(),
+                    naturalKey: config.naturalKey,
+                    fields: fields
+                };
+                
+                // 格式化输出
+                const output = formatOutput(result);
+                document.getElementById('output').innerHTML = `<button class="copy-btn" onclick="copyOutput()" id="copyBtn">复制</button>${output}`;
+                
+            } catch (error) {
+                document.getElementById('output').innerHTML = `<button class="copy-btn" onclick="copyOutput()" id="copyBtn">コピー</button><div class="error">エラー：${error.message}</div>`;
+            }
+        }
+
+        function formatOutput(result) {
+            let output = `name: "${result.name}"\n`;
+            output += `database: "${result.database}"\n`;
+            output += `naturalKey: [ ${result.naturalKey.map(key => `"${key}"`).join(', ')} ]\n`;
+            output += `fields:\n`;
+            
+            for (const [fieldName, fieldConfig] of Object.entries(result.fields)) {
+                output += `  ${fieldName}:\n`;
+                output += `    type: "${fieldConfig.type}"\n`;
+                output += `    required: ${fieldConfig.required}\n`;
+                
+                if (fieldConfig.length !== undefined) {
+                    output += `    length: ${fieldConfig.length}\n`;
+                }
+                if (fieldConfig.min !== undefined) {
+                    output += `    min: ${fieldConfig.min}\n`;
+                }
+                if (fieldConfig.max !== undefined) {
+                    output += `    max: ${fieldConfig.max}\n`;
+                }
+            }
+            
+            return output;
+        }
+
+        function copyOutput() {
+            const outputElement = document.getElementById('output');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            // 获取纯文本内容（排除复制按钮）
+            const textContent = outputElement.textContent.replace('コピー', '').trim();
+            
+            navigator.clipboard.writeText(textContent).then(() => {
+                copyBtn.textContent = 'コピー済み!';
+                copyBtn.classList.add('copy-success');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = 'コピー';
+                    copyBtn.classList.remove('copy-success');
+                }, 2000);
+            }).catch(() => {
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = textContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                copyBtn.textContent = 'コピー済み!';
+                copyBtn.classList.add('copy-success');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = 'コピー';
+                    copyBtn.classList.remove('copy-success');
+                }, 2000);
+            });
+        }
+
+        // 支持Enter键快速生成
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                generateSchema();
+            }
+        });
+    </script>
+</body>
+</html>
