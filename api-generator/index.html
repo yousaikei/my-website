@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量産APIサンプル生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .output-section {
+            padding: 30px;
+            background: white;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #495057;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-textarea {
+            min-height: 300px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+            transform: translateY(-2px);
+        }
+        
+        .output-container {
+            position: relative;
+        }
+        
+        .output-textarea {
+            min-height: 500px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-section {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>量産APIサンプル生成器</h1>
+            <p>データベーステーブル定義からKotlin GraphQLサービスコードを自動生成</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📝 入力設定</h2>
+                
+                <div class="form-group">
+                    <label class="form-label" for="domain">ドメイン名 (XXXXX):</label>
+                    <input type="text" id="domain" class="form-input" placeholder="例: payment" value="payment">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="tableDesc">テーブル説明 (MMMMM):</label>
+                    <input type="text" id="tableDesc" class="form-input" placeholder="例: 支払い要求" value="支払い要求">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="yamlInput">YAML定義:</label>
+                    <textarea id="yamlInput" class="form-input form-textarea" placeholder="YAML定義をここに貼り付けてください...">name: "public.payment_request"
+database: "BUSINESS"
+naturalKey: [ "store_code", "request_number" ]
+fields:
+  store_code:
+    type: "integer"
+    required: true
+  request_number:
+    type: "string"
+    required: true
+    length: 13
+  content_code:
+    type: "string"
+    required: false
+    length: 3
+  detail:
+    type: "string"
+    required: false
+    length: 1600
+  amount:
+    type: "integer"
+    required: true
+  department:
+    type: "string"
+    required: false
+    length: 5
+  company_code:
+    type: "string"
+    required: false
+    length: 5
+  payment_date:
+    type: "date"
+    required: false
+  decision_date:
+    type: "timestamp"
+    required: false
+  approval_number:
+    type: "string"
+    required: false
+    length: 13
+  supplier:
+    type: "string"
+    required: false
+    length: 400</textarea>
+                    <div id="yamlError" class="error"></div>
+                </div>
+                
+                <div class="buttons">
+                    <button class="btn btn-primary" onclick="generateCode()">
+                        🚀 コード生成
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearAll()">
+                        🗑️ クリア
+                    </button>
+                </div>
+            </div>
+            
+            <div class="output-section">
+                <h2 class="section-title">💻 生成されたコード</h2>
+                
+                <div class="output-container">
+                    <button class="btn btn-secondary copy-btn" onclick="copyToClipboard()">
+                        📋 コピー
+                    </button>
+                    <textarea id="output" class="form-input output-textarea" readonly placeholder="生成されたKotlinコードがここに表示されます..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast">
+        コードをクリップボードにコピーしました！
+    </div>
+
+    <script>
+        function parseYAML(yamlText) {
+            try {
+                const result = {
+                    name: '',
+                    database: '',
+                    naturalKey: [],
+                    fields: {}
+                };
+
+                const lines = yamlText.split('\n');
+                let inFields = false;
+                let currentField = null;
+
+                for (let raw of lines) {
+                    // 忽略空行和注释行，但保留缩进
+                    if (!raw.trim() || raw.trim().startsWith('#')) continue;
+
+                    const indent = (raw.match(/^\s*/)[0] || '').length; // 前导空格数
+                    const line = raw.trim();
+
+                    // 顶层键（无缩进）
+                    if (indent === 0) {
+                    if (line.startsWith('name:')) {
+                        result.name = line.slice(5).trim().replace(/^['"]|['"]$/g, '');
+                        continue;
+                    }
+                    if (line.startsWith('database:')) {
+                        result.database = line.slice(9).trim().replace(/^['"]|['"]$/g, '');
+                        continue;
+                    }
+                    if (line.startsWith('naturalKey:')) {
+                        const m = line.match(/\[(.*)\]/);
+                        if (m) {
+                        result.naturalKey = m[1]
+                            .split(',')
+                            .map(s => s.trim().replace(/^['"]|['"]$/g, ''))
+                            .filter(Boolean);
+                        } else {
+                        result.naturalKey = [];
+                        }
+                        continue;
+                    }
+                    if (line.startsWith('fields:')) {
+                        inFields = true;
+                        continue;
+                    }
+                    }
+
+                    if (!inFields) continue;
+
+                    // fields 下的“字段名”行：两个空格缩进并以 ":" 结尾
+                    if (indent === 2 && /:$/i.test(line)) {
+                    currentField = line.slice(0, -1).trim(); // 去掉末尾冒号
+                    if (!currentField) continue;
+                    result.fields[currentField] = {};
+                    continue;
+                    }
+
+                    // 字段属性行：四个及以上空格缩进，形如 "type: xxx"
+                    if (indent >= 4 && currentField && line.includes(':')) {
+                    const idx = line.indexOf(':');
+                    const key = line.slice(0, idx).trim();
+                    let value = line.slice(idx + 1).trim();
+
+                    // 去引号
+                    value = value.replace(/^['"]|['"]$/g, '');
+
+                    if (key === 'type') {
+                        result.fields[currentField].type = value;
+                    } else if (key === 'required') {
+                        result.fields[currentField].required = value === 'true';
+                    } else if (key === 'length') {
+                        const n = parseInt(value, 10);
+                        if (!Number.isNaN(n)) result.fields[currentField].length = n;
+                    }
+                    }
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('YAML解析エラー: ' + error.message);
+            }
+        }
+        
+        function toCamelCase(str) {
+            return str.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
+        }
+        
+        function toPascalCase(str) {
+            return str.replace(/(^|_)([a-z])/g, (match, prefix, letter) => letter.toUpperCase());
+        }
+        
+        function getKotlinType(type) {
+            switch (type) {
+                case 'integer':
+                    return 'Int';
+                case 'string':
+                    return 'String';
+                case 'date':
+                    return 'String';
+                case 'timestamp':
+                    return 'String';
+                default:
+                    return 'String';
+            }
+        }
+        
+        function getDefaultValue(type) {
+            switch (type) {
+                case 'integer':
+                    return '0';
+                case 'string':
+                case 'date':
+                case 'timestamp':
+                    return '""';
+                default:
+                    return '""';
+            }
+        }
+        
+        function generateCode() {
+            try {
+                document.getElementById('yamlError').textContent = '';
+                
+                const domain = document.getElementById('domain').value.trim();
+                const tableDesc = document.getElementById('tableDesc').value.trim();
+                const yamlText = document.getElementById('yamlInput').value.trim();
+                
+                if (!domain || !tableDesc || !yamlText) {
+                    throw new Error('すべてのフィールドを入力してください。');
+                }
+                
+                const data = parseYAML(yamlText);
+                const tableName = data.name.split('.').pop(); // "public.payment_request" -> "payment_request"
+                const className = toPascalCase(tableName);
+                
+                // Generate natural key parameters
+                const naturalKeyParams = data.naturalKey.map(key => {
+                    const field = data.fields[key];
+                    if (!field) return '';
+                    const camelKey = toCamelCase(key);
+                    const kotlinType = getKotlinType(field.type);
+                    return `            "${key}" to filterInput.${camelKey},`;
+                }).join('\n');
+                
+                // Generate DTO fields for InputDto
+                const inputDtoFields = data.naturalKey.map(key => {
+                    const field = data.fields[key];
+                    if (!field) return '';
+                    const camelKey = toCamelCase(key);
+                    const kotlinType = getKotlinType(field.type);
+                    const defaultValue = getDefaultValue(field.type);
+                    return `    var ${camelKey}: ${kotlinType} = ${defaultValue},`;
+                }).join('\n');
+                
+                // Generate DTO fields for main DTO
+                const dtoFields = Object.keys(data.fields).map(key => {
+                    const field = data.fields[key];
+                    const camelKey = toCamelCase(key);
+                    const kotlinType = getKotlinType(field.type);
+                    const defaultValue = getDefaultValue(field.type);
+                    return `    val ${camelKey}: ${kotlinType} = ${defaultValue},`;
+                }).join('\n');
+                
+                // Generate mapping function
+                const mappingFields = Object.keys(data.fields).map(key => {
+                    const field = data.fields[key];
+                    const camelKey = toCamelCase(key);
+                    const kotlinType = getKotlinType(field.type);
+                    return `        ${camelKey} = jsonData["${key}"] as ${kotlinType},`;
+                }).join('\n');
+                
+                // Find store_code field for the parameter
+                const storeCodeField = data.naturalKey.find(key => key === 'store_code');
+                const storeCodeVar = storeCodeField ? `filterInput.${toCamelCase(storeCodeField)}` : 'filterInput.storeCode';
+                
+                // Check if database is BUSINESS for storeCode parameter
+                const isBusiness = data.database === 'BUSINESS';
+                const storeCodeDeclaration = isBusiness ? `\n        val storeCode = ${storeCodeVar}` : '';
+                const fetchByNKCall = isBusiness ? 
+                    'referenceEngine.fetchByNaturalKey(paramMap, storeCode)' : 
+                    'referenceEngine.fetchByNaturalKey(paramMap)';
+                
+                const code = `package jp.trial.shinise.reference.api.master.${domain}.service
+
+import jp.trial.shinise.reference.api.master.${domain}.common.utils.${toPascalCase(domain)}ResourceLocator
+import jp.trial.shinise.reference.factory.ReferenceEngineFactory
+import org.eclipse.microprofile.graphql.GraphQLApi
+import org.eclipse.microprofile.graphql.Query
+
+/**
+ * ${tableDesc}（\`${tableName}\`）へアクセスするGraphQLを提供するクラス
+ */
+@GraphQLApi
+class ${className}GraphQL(
+    referenceEngineFactory: ReferenceEngineFactory,
+) {
+    private val referenceEngine =
+        referenceEngineFactory.createReferenceEngine(${toPascalCase(domain)}ResourceLocator.resource("${tableName}"))
+
+    @Query
+    fun fetch${className}BySK(filterInput: ${className}InputDto): List<${className}Dto> {
+        val paramMap = mapOf(
+${naturalKeyParams}
+            )${storeCodeDeclaration}
+
+        val engineResponse = ${fetchByNKCall} //仕様書あわせて、fetchByNaturalKeyかfetchByFilterか、適当に選択してください
+
+        return engineResponse.map(::to${className}Dto)
+    }
+}
+
+private fun to${className}Dto(map: Map<String, Any?>): ${className}Dto {
+    val jsonData =
+        map["data"] as? Map<*, *>
+            ?: error("Unable to get 'data' column.")
+
+    return ${className}Dto(
+${mappingFields}
+    )
+}
+
+data class ${className}InputDto(
+${inputDtoFields}
+)
+
+data class ${className}Dto(
+${dtoFields}
+)`;
+                
+                document.getElementById('output').value = code;
+                
+            } catch (error) {
+                document.getElementById('yamlError').textContent = error.message;
+                document.getElementById('output').value = '';
+            }
+        }
+        
+        function copyToClipboard() {
+            const output = document.getElementById('output');
+            output.select();
+            document.execCommand('copy');
+            
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        function clearAll() {
+            document.getElementById('domain').value = '';
+            document.getElementById('tableDesc').value = '';
+            document.getElementById('yamlInput').value = '';
+            document.getElementById('output').value = '';
+            document.getElementById('yamlError').textContent = '';
+        }
+        
+        // Auto-generate on page load with default values
+        window.addEventListener('load', () => {
+            generateCode();
+        });
+    </script>
+</body>
+</html>
+
