@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量産APIサンプル生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .output-section {
+            padding: 30px;
+            background: white;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #495057;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-textarea {
+            min-height: 250px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+        
+        .checkbox-group {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .checkbox-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .checkbox-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+        
+        .checkbox-item label {
+            cursor: pointer;
+            flex-grow: 1;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .checkbox-description {
+            font-size: 12px;
+            color: #6c757d;
+            margin-left: 28px;
+            margin-top: 4px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+            transform: translateY(-2px);
+        }
+        
+        .output-container {
+            position: relative;
+        }
+        
+        .output-textarea {
+            min-height: 550px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-section {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>量産APIサンプル生成器</h1>
+            <p>データベーステーブル定義からKotlin GraphQLサービスコードを自動生成</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📝 入力設定</h2>
+                
+                <div class="form-group">
+                    <label class="form-label" for="domain">ドメイン名:</label>
+                    <input type="text" id="domain" class="form-input" placeholder="例: payment" value="management">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="tableDesc">テーブル説明:</label>
+                    <input type="text" id="tableDesc" class="form-input" placeholder="例: 支払い要求" value="税区分マスタ">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">API生成タイプ:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="naturalKey" checked>
+                            <label for="naturalKey">自然键取得</label>
+                        </div>
+                        <div class="checkbox-description">fetchByNaturalKey を使用した厳密マッチング</div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="filterSingle" checked>
+                            <label for="filterSingle">柔软取得（单值）</label>
+                        </div>
+                        <div class="checkbox-description">fetchByFilter を使用した単一値での柔軟検索</div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="filterMulti">
+                            <label for="filterMulti">柔软取得（多值）</label>
+                        </div>
+                        <div class="checkbox-description">fetchByFilter を使用した複数値での柔軟検索</div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="filterWithNull">
+                            <label for="filterWithNull">柔软取得（包含空値処理）</label>
+                        </div>
+                        <div class="checkbox-description">全て空の場合は全件取得</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="yamlInput">YAML定義:</label>
+                    <textarea id="yamlInput" class="form-input form-textarea" placeholder="YAML定義をここに貼り付けてください...">name: "legacy.mt_tax"
+database: "COMMON"
+naturalKey: [ "id", "code" ]
+fields:
+  id:
+    type: "integer"
+    required: true
+  tax:
+    type: "integer"
+    required: false
+  code:
+    type: "string"
+    required: false
+  recno:
+    type: "string"
+    required: false
+  status:
+    type: "string"
+    required: false</textarea>
+                    <div id="yamlError" class="error"></div>
+                </div>
+                
+                <div class="buttons">
+                    <button class="btn btn-primary" onclick="generateCode()">
+                        🚀 コード生成
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearAll()">
+                        🗑️ クリア
+                    </button>
+                </div>
+            </div>
+            
+            <div class="output-section">
+                <h2 class="section-title">💻 生成されたコード</h2>
+                
+                <div class="output-container">
+                    <button class="btn btn-secondary copy-btn" onclick="copyToClipboard()">
+                        📋 コピー
+                    </button>
+                    <textarea id="output" class="form-input output-textarea" readonly placeholder="生成されたKotlinコードがここに表示されます..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast">
+        コードをクリップボードにコピーしました！
+    </div>
+
+    <script>
+        function parseYAML(yamlText) {
+            try {
+                const result = {
+                    name: '',
+                    database: '',
+                    naturalKey: [],
+                    fields: {}
+                };
+
+                const lines = yamlText.split('\n');
+                let inFields = false;
+                let currentField = null;
+
+                for (let raw of lines) {
+                    if (!raw.trim() || raw.trim().startsWith('#')) continue;
+
+                    const indent = (raw.match(/^\s*/)[0] || '').length;
+                    const line = raw.trim();
+
+                    if (indent === 0) {
+                        if (line.startsWith('name:')) {
+                            result.name = line.slice(5).trim().replace(/^['"]|['"]$/g, '');
+                            continue;
+                        }
+                        if (line.startsWith('database:')) {
+                            result.database = line.slice(9).trim().replace(/^['"]|['"]$/g, '');
+                            continue;
+                        }
+                        if (line.startsWith('naturalKey:')) {
+                            const m = line.match(/\[(.*)\]/);
+                            if (m) {
+                                result.naturalKey = m[1]
+                                    .split(',')
+                                    .map(s => s.trim().replace(/^['"]|['"]$/g, ''))
+                                    .filter(Boolean);
+                            } else {
+                                result.naturalKey = [];
+                            }
+                            continue;
+                        }
+                        if (line.startsWith('fields:')) {
+                            inFields = true;
+                            continue;
+                        }
+                    }
+
+                    if (!inFields) continue;
+
+                    if (indent === 2 && /:$/i.test(line)) {
+                        currentField = line.slice(0, -1).trim();
+                        if (!currentField) continue;
+                        result.fields[currentField] = {};
+                        continue;
+                    }
+
+                    if (indent >= 4 && currentField && line.includes(':')) {
+                        const idx = line.indexOf(':');
+                        const key = line.slice(0, idx).trim();
+                        let value = line.slice(idx + 1).trim();
+
+                        value = value.replace(/^['"]|['"]$/g, '');
+
+                        if (key === 'type') {
+                            result.fields[currentField].type = value;
+                        } else if (key === 'required') {
+                            result.fields[currentField].required = value === 'true';
+                        } else if (key === 'length') {
+                            const n = parseInt(value, 10);
+                            if (!Number.isNaN(n)) result.fields[currentField].length = n;
+                        }
+                    }
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('YAML解析エラー: ' + error.message);
+            }
+        }
+        
+        function toCamelCase(str) {
+            return str.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
+        }
+        
+        function toPascalCase(str) {
+            return str.replace(/(^|_)([a-z])/g, (match, prefix, letter) => letter.toUpperCase());
+        }
+        
+        function getKotlinType(type) {
+            switch (type) {
+                case 'integer':
+                    return 'Int';
+                case 'string':
+                    return 'String';
+                case 'date':
+                    return 'String';
+                case 'timestamp':
+                    return 'String';
+                default:
+                    return 'String';
+            }
+        }
+        
+        function getNullableKotlinType(type) {
+            switch (type) {
+                case 'integer':
+                    return 'Int?';
+                case 'string':
+                    return 'String?';
+                case 'date':
+                    return 'String?';
+                case 'timestamp':
+                    return 'String?';
+                default:
+                    return 'String?';
+            }
+        }
+        
+        function getDefaultValue(type) {
+            switch (type) {
+                case 'integer':
+                    return '0';
+                case 'string':
+                case 'date':
+                case 'timestamp':
+                    return '""';
+                default:
+                    return '""';
+            }
+        }
+
+        function getNullDefaultValue(type) {
+            return 'null';
+        }
+        
+        function generateNaturalKeyMethod(data, className, domain) {
+            const tableName = data.name.split('.').pop();
+            
+            const naturalKeyParams = data.naturalKey.map(key => {
+                return `                "${key}" to input.${toCamelCase(key)},`;
+            }).join('\n');
+            
+            const inputDtoFields = data.naturalKey.map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getKotlinType(field.type);
+                const defaultValue = getDefaultValue(field.type);
+                return `    var ${camelKey}: ${kotlinType} = ${defaultValue},`;
+            }).join('\n');
+            
+            const dtoFields = Object.keys(data.fields).map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getKotlinType(field.type);
+                const defaultValue = getDefaultValue(field.type);
+                return `    val ${camelKey}: ${kotlinType} = ${defaultValue},`;
+            }).join('\n');
+            
+            const mappingFields = Object.keys(data.fields).map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getKotlinType(field.type);
+                if (kotlinType === 'Int') {
+                    return `        ${camelKey} = jsonData["${key}"] as ${kotlinType},`;
+                } else {
+                    return `        ${camelKey} = jsonData["${key}"] as? ${kotlinType} ?: ${getDefaultValue(field.type)},`;
+                }
+            }).join('\n');
+            
+            return `    @Query
+    fun fetch${className}(input: ${className}InputDto): List<${className}Dto> {
+        val paramMap = mapOf(
+${naturalKeyParams}
+        )
+        val engineResponse = referenceEngine.fetchByNaturalKey(paramMap)
+        return engineResponse.map(::to${className}Dto)
+    }
+
+    @Query  
+    fun fetch${className}List(inputList: List<${className}InputDto>): List<${className}Dto> {
+        return inputList.flatMap { input ->
+            val paramMap = mapOf(
+${naturalKeyParams}
+            )
+            val engineResponse = referenceEngine.fetchByNaturalKey(paramMap)
+            engineResponse.map(::to${className}Dto)
+        }
+    }
+
+private fun to${className}Dto(map: Map<String, Any?>): ${className}Dto {
+    val jsonData =
+        map["data"] as? Map<*, *>
+            ?: error("Unable to get 'data' column.")
+
+    return ${className}Dto(
+${mappingFields}
+    )
+}
+
+data class ${className}InputDto(
+${inputDtoFields}
+)
+
+data class ${className}Dto(
+${dtoFields}
+)`;
+        }
+
+        function generateFilterSingleMethod(data, className, domain) {
+            const naturalKeyField = data.naturalKey[0];
+            const naturalKeyCamel = toCamelCase(naturalKeyField);
+            const field = data.fields[naturalKeyField];
+            const kotlinType = getNullableKotlinType(field.type);
+            const defaultValue = getNullDefaultValue(field.type);
+            
+            const dtoFields = Object.keys(data.fields).map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getKotlinType(field.type);
+                const defaultValue = getDefaultValue(field.type);
+                return `    val ${camelKey}: ${kotlinType} = ${defaultValue},`;
+            }).join('\n');
+            
+            const mappingFields = Object.keys(data.fields).map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getKotlinType(field.type);
+                if (kotlinType === 'Int') {
+                    return `        ${camelKey} = jsonData["${key}"] as ${kotlinType},`;
+                } else {
+                    return `        ${camelKey} = jsonData["${key}"] as? ${kotlinType} ?: ${getDefaultValue(field.type)},`;
+                }
+            }).join('\n');
+            
+            return `    @Query
+    fun fetch${className}ByFilter(filterInput: ${className}InputDto?): List<${className}Dto> {
+        val paramMap = mapOf(
+            "${naturalKeyField}" to filterInput?.${naturalKeyCamel},
+        )
+
+        val engineResponse = referenceEngine.fetchByFilter(
+            filterMap = paramMap,
+            distinctFields = listOf("${naturalKeyField}"),
+            latestOnly = false,
+            fromDesc = false
+        )
+        return engineResponse.map(::to${className}Dto)
+    }
+
+private fun to${className}Dto(map: Map<String, Any?>): ${className}Dto {
+    val jsonData =
+        map["data"] as? Map<*, *>
+            ?: error("Unable to get 'data' column.")
+
+    return ${className}Dto(
+${mappingFields}
+    )
+}
+
+data class ${className}InputDto(
+    var ${naturalKeyCamel}: ${kotlinType} = ${defaultValue},
+)
+
+data class ${className}Dto(
+${dtoFields}
+)`;
+        }
+
+        function generateFilterMultiMethod(data, className, domain) {
+            const naturalKeyFields = data.naturalKey.map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getNullableKotlinType(field.type);
+                const defaultValue = getNullDefaultValue(field.type);
+                return `    var ${camelKey}: ${kotlinType} = ${defaultValue},`;
+            }).join('\n');
+
+            const filterMapEntries = data.naturalKey.map(key => {
+                const camelKey = toCamelCase(key);
+                return `                    dto.${camelKey}?.let { put("${key}", it) }`;
+            }).join('\n');
+            
+            const dtoFields = Object.keys(data.fields).map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getKotlinType(field.type);
+                const defaultValue = getDefaultValue(field.type);
+                return `    val ${camelKey}: ${kotlinType} = ${defaultValue},`;
+            }).join('\n');
+            
+            const mappingFields = Object.keys(data.fields).map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getKotlinType(field.type);
+                if (kotlinType === 'Int') {
+                    return `        ${camelKey} = jsonData["${key}"] as ${kotlinType},`;
+                } else {
+                    return `        ${camelKey} = jsonData["${key}"] as? ${kotlinType} ?: ${getDefaultValue(field.type)},`;
+                }
+            }).join('\n');
+            
+            const primaryField = data.naturalKey[0];
+            
+            return `    @Query
+    fun fetch${className}ByMultiFilter(filterInput: List<${className}InputDto>?): List<${className}Dto> {
+        return (filterInput?.takeIf { it.isNotEmpty() } ?: listOf(${className}InputDto()))
+            .flatMap { dto ->
+                val filterMap = buildMap {
+${filterMapEntries}
+                }
+
+                referenceEngine.fetchByFilter(
+                    filterMap = filterMap,
+                    distinctFields = listOf("${primaryField}"),
+                    latestOnly = false,
+                    fromDesc = false
+                ).map(::to${className}Dto)
+            }
+    }
+
+private fun to${className}Dto(map: Map<String, Any?>): ${className}Dto {
+    val jsonData =
+        map["data"] as? Map<*, *>
+            ?: error("Unable to get 'data' column.")
+
+    return ${className}Dto(
+${mappingFields}
+    )
+}
+
+data class ${className}InputDto(
+${naturalKeyFields}
+)
+
+data class ${className}Dto(
+${dtoFields}
+)`;
+        }
+
+        function generateFilterWithNullMethod(data, className, domain) {
+            const naturalKeyField = data.naturalKey[0];
+            const naturalKeyFields = data.naturalKey.slice(1).map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getNullableKotlinType(field.type);
+                const defaultValue = getNullDefaultValue(field.type);
+                return `    val ${camelKey}: ${kotlinType} = ${defaultValue}`;
+            }).join(',\n');
+
+            const primaryFieldCamel = toCamelCase(naturalKeyField);
+            const primaryField = data.fields[naturalKeyField];
+            const primaryKotlinType = getNullableKotlinType(primaryField.type);
+            
+            const dtoFields = Object.keys(data.fields).map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getKotlinType(field.type);
+                const defaultValue = getDefaultValue(field.type);
+                return `    val ${camelKey}: ${kotlinType} = ${defaultValue},`;
+            }).join('\n');
+            
+            const mappingFields = Object.keys(data.fields).map(key => {
+                const field = data.fields[key];
+                const camelKey = toCamelCase(key);
+                const kotlinType = getKotlinType(field.type);
+                if (kotlinType === 'Int') {
+                    return `        ${camelKey} = jsonData["${key}"] as ${kotlinType},`;
+                } else {
+                    return `        ${camelKey} = jsonData["${key}"] as? ${kotlinType} ?: ${getDefaultValue(field.type)},`;
+                }
+            }).join('\n');
+            
+            const nullFilterInputFields = `    var ${primaryFieldCamel}: ${primaryKotlinType} = null,` + 
+                (naturalKeyFields ? '\n' + naturalKeyFields : '');
+            
+            return `    @Query
+    fun fetch${className}WithNull(filterInput: List<${className}InputDto>?): List<${className}Dto> {
+        return (filterInput?.mapNotNull { it.${primaryFieldCamel} }?.takeIf { it.isNotEmpty() } ?: listOf(null))
+            .flatMap { ${naturalKeyField.replace('_', '')} ->
+                referenceEngine.fetchByFilter(
+                    filterMap = ${naturalKeyField.replace('_', '')}?.let { mapOf("${naturalKeyField}" to it) } ?: emptyMap(),
+                    distinctFields = listOf("${naturalKeyField}"),
+                    latestOnly = false,
+                    fromDesc = false
+                ).map(::to${className}Dto)
+            }
+    }
+
+private fun to${className}Dto(map: Map<String, Any?>): ${className}Dto {
+    val jsonData =
+        map["data"] as? Map<*, *>
+            ?: error("Unable to get 'data' column.")
+
+    return ${className}Dto(
+${mappingFields}
+    )
+}
+
+data class ${className}InputDto(
+${nullFilterInputFields}
+)
+
+data class ${className}Dto(
+${dtoFields}
+)`;
+        }
+        
+        function generateCode() {
+            try {
+                document.getElementById('yamlError').textContent = '';
+                
+                const domain = document.getElementById('domain').value.trim();
+                const tableDesc = document.getElementById('tableDesc').value.trim();
+                const yamlText = document.getElementById('yamlInput').value.trim();
+                
+                if (!domain || !tableDesc || !yamlText) {
+                    throw new Error('すべてのフィールドを入力してください。');
+                }
+                
+                const data = parseYAML(yamlText);
+                const tableName = data.name.split('.').pop();
+                const className = toPascalCase(tableName);
+                
+                // Get selected options
+                const naturalKey = document.getElementById('naturalKey').checked;
+                const filterSingle = document.getElementById('filterSingle').checked;
+                const filterMulti = document.getElementById('filterMulti').checked;
+                const filterWithNull = document.getElementById('filterWithNull').checked;
+                
+                let code = `package jp.trial.shinise.reference.api.master.${domain}.service
+
+import jp.trial.shinise.reference.api.master.${domain}.common.utils.${toPascalCase(domain)}ResourceLocator
+import jp.trial.shinise.reference.factory.ReferenceEngineFactory
+import org.eclipse.microprofile.graphql.GraphQLApi
+import org.eclipse.microprofile.graphql.Query
+
+/**
+ * ${tableDesc}（\`${tableName}\`）へアクセスするGraphQLを提供するクラス
+ */
+@GraphQLApi
+class ${className}GraphQL(
+    referenceEngineFactory: ReferenceEngineFactory,
+) {
+    private val referenceEngine =
+        referenceEngineFactory.createReferenceEngine(${toPascalCase(domain)}ResourceLocator.resource("${tableName}"))
+
+`;
+
+                const methods = [];
+                
+                if (naturalKey) {
+                    methods.push(generateNaturalKeyMethod(data, className, domain));
+                }
+                
+                if (filterSingle) {
+                    methods.push(generateFilterSingleMethod(data, className, domain));
+                }
+                
+                if (filterMulti) {
+                    methods.push(generateFilterMultiMethod(data, className, domain));
+                }
+                
+                if (filterWithNull) {
+                    methods.push(generateFilterWithNullMethod(data, className, domain));
+                }
+                
+                code += methods.join('\n\n');
+                code += '\n}';
+                
+                document.getElementById('output').value = code;
+                
+            } catch (error) {
+                document.getElementById('yamlError').textContent = error.message;
+                document.getElementById('output').value = '';
+            }
+        }
+        
+        function copyToClipboard() {
+            const output = document.getElementById('output');
+            output.select();
+            document.execCommand('copy');
+            
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        function clearAll() {
+            document.getElementById('domain').value = '';
+            document.getElementById('tableDesc').value = '';
+            document.getElementById('yamlInput').value = '';
+            document.getElementById('output').value = '';
+            document.getElementById('yamlError').textContent = '';
+            
+            // Reset checkboxes to default
+            document.getElementById('naturalKey').checked = true;
+            document.getElementById('filterSingle').checked = false;
+            document.getElementById('filterMulti').checked = false;
+            document.getElementById('filterWithNull').checked = false;
+        }
+        
+        // Auto-generate on page load with default values
+        window.addEventListener('load', () => {
+            generateCode();
+        });
+    </script>
+</body>
+</html>
